@@ -19,7 +19,7 @@ META_ROW = 2
 HEADER_ROW = 4
 FIRST_DATA_ROW = 5
 
-ROW_HEIGHTS = {"compacta": 12, "normal": 15, "amplia": 18}
+ROW_HEIGHT_FACTORS = {"compacta": 1.2, "normal": 1.5, "amplia": 1.8}
 HEADER_COLORS = {"gris": "D9D9D9", "verde": "C6EFCE"}
 ZEBRA_COLOR = "F2F2F2"
 THIN = Side(style="thin", color="808080")
@@ -104,7 +104,9 @@ def build_workbook(rows: list[StockRow], area: int, report: StockReport, fmt: Fo
     body_font = Font(name=fmt.font_family, size=fmt.font_size)
     alt_font = Font(name=fmt.font_family, size=max(6, fmt.font_size - 2))
     number_format = _number_format(fmt)
-    height = ROW_HEIGHTS.get(fmt.density, 15)
+    factor = ROW_HEIGHT_FACTORS.get(fmt.density, 1.5)
+    height = max(10.0, round(fmt.font_size * factor, 1))
+    alt_height = max(9.0, round(max(6, fmt.font_size - 2) * 1.2, 1))
     zebra = PatternFill("solid", fgColor=ZEBRA_COLOR)
 
     current = FIRST_DATA_ROW
@@ -138,7 +140,7 @@ def build_workbook(rows: list[StockRow], area: int, report: StockReport, fmt: Fo
 
         for alt in row.alt_barcodes:
             _text(ws, current, 2, alt, alt_font, "center")
-            ws.row_dimensions[current].height = max(10, height - 3)
+            ws.row_dimensions[current].height = alt_height
             current += 1
 
     last_row = max(current - 1, HEADER_ROW)

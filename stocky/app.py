@@ -49,10 +49,10 @@ def main(argv: list[str]) -> int:
     try:
         report = read_report(path)
     except ParseError as error:
-        _error(str(error))
+        _error(f"{path}: {error}")
         return 1
-    except (OSError, ValueError) as error:
-        _error(f"No se pudo leer el reporte: {error}")
+    except Exception as error:  # .xlsx corrupto, .xls antiguo, archivo que no es Excel
+        _error(f"No se pudo leer el reporte {path}: {error}")
         return 1
 
     ui.run(report, path)

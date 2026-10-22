@@ -468,7 +468,7 @@ git commit -m "feat: exportacion xlsx lista para imprimir"
 - Create: `stocky/pdf.py`, `tests/test_pdf.py`
 
 **Interfaces:**
-- Produces: `excel_available() -> bool`; `export_pdf(xlsx: Path, pdf: Path) -> Path`; `print_pdf(pdf: Path) -> None`; `PdfError(Exception)`.
+- Produces: `excel_available() -> bool`; `export_pdf(xlsx: Path, pdf: Path) -> Path`; `print_xlsx(xlsx: Path) -> None`; `PdfError(Exception)`.
 
 - [ ] **Step 1: Escribir las pruebas que fallan**
 
@@ -494,7 +494,7 @@ Expected: FAIL, módulo inexistente.
 
 - [ ] **Step 3: Implementar**
 
-`export_pdf`: valida existencia; `win32com.client.DispatchEx("Excel.Application")` con `Visible=False`, `DisplayAlerts=False`; abre el xlsx con `ReadOnly=True`, `ExportAsFixedFormat(0, str(pdf.resolve()))`, cierra sin guardar; `Quit()` en `finally`. Envuelve `com_error` en `PdfError` con el texto de Excel. `excel_available` intenta crear y cerrar la app y devuelve `False` ante cualquier excepción. `print_pdf` usa `os.startfile(str(pdf), "print")`.
+`export_pdf`: valida existencia; `win32com.client.DispatchEx("Excel.Application")` con `Visible=False`, `DisplayAlerts=False`; abre el xlsx con `ReadOnly=True`, `ExportAsFixedFormat(0, str(pdf.resolve()))`, cierra sin guardar; `Quit()` en `finally`. Envuelve `com_error` en `PdfError` con el texto de Excel. `excel_available` intenta crear y cerrar la app y devuelve `False` ante cualquier excepción. `print_xlsx` abre el xlsx en Excel y llama `Workbook.PrintOut()` (el visor de PDF no tiene verbo `print`).
 
 - [ ] **Step 4: Correr y ver que pasan**
 
@@ -650,7 +650,7 @@ Expected: FAIL, `App` no existe.
 
 Estructura: ventana 1180×760, título `Stocky — <fecha>`. Barra superior con nombre del archivo, `status_text` y botón "Abrir carpeta". Panel izquierdo (260 px, scrollable): selector de fuente (las familias de `tkinter.font.families()` resueltas con `resolve_font`), tamaño del cuerpo (Spinbox 8–16), tamaño del título (Spinbox 8–24), densidad (Combobox), filas alternadas, color de encabezado, márgenes (Combobox con las 4 opciones, mostradas en cm), orientación, descripción ancha, mostrar rubro, separador de miles, encabezado extra (Entry), lista de áreas con `Checkbutton` y conteo, botones "Todas", "Las de siempre", "Guardar como preset", "Presets ▾", "Restablecer". Zona derecha: pestañas por área seleccionada con Notebook, y un `Canvas` con scroll vertical que muestra las páginas como `PhotoImage` (base64 de los bytes de `render_pages`). Barra inferior: estado del render y botones "Generar todos", "Imprimir", "Abrir PDF".
 
-Comportamiento: cualquier cambio de control reprograma `root.after(400, self._refresh_preview)`; `_refresh_preview` marca el área actual, escribe el xlsx en la carpeta temporal (`tempfile.mkdtemp(prefix="stocky_")`), llama `export_pdf` y `render_pages`, y pinta. Si `export_pdf` falla, muestra el mensaje en la barra inferior y deja los xlsx disponibles. "Generar todos" escribe en `output_dir` cada área marcada (xlsx y pdf) y abre la carpeta con `os.startfile`; si la escritura falla por archivo abierto o permiso, muestra la ruta y el motivo en la barra inferior y no corta el resto. "Imprimir" llama `print_pdf` sobre el pdf del área visible. Al cerrar, guarda `Config` con formato, áreas y carpeta.
+Comportamiento: cualquier cambio de control reprograma `root.after(400, self._refresh_preview)`; `_refresh_preview` marca el área actual, escribe el xlsx en la carpeta temporal (`tempfile.mkdtemp(prefix="stocky_")`), llama `export_pdf` y `render_pages`, y pinta. Si `export_pdf` falla, muestra el mensaje en la barra inferior y deja los xlsx disponibles. "Generar todos" escribe en `output_dir` cada área marcada (xlsx y pdf) y abre la carpeta con `os.startfile`; si la escritura falla por archivo abierto o permiso, muestra la ruta y el motivo en la barra inferior y no corta el resto. "Imprimir" regenera el xlsx del área visible y lo envía con `print_xlsx` (Excel COM) en un hilo aparte. Al cerrar, guarda `Config` con formato, áreas y carpeta.
 
 - [ ] **Step 5: Correr y ver que pasan**
 

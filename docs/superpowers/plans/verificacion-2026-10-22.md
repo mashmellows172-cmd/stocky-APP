@@ -5,7 +5,7 @@ Corrida hecha sobre `C:\Users\victus\Downloads\stock17-06.xlsx` (reporte real) y
 
 ## Suite completa
 
-`python -m pytest -q` → **40 passed**, sin pruebas saltadas. Corren la prueba `slow`
+`python -m pytest -q` → **45 passed**, sin pruebas saltadas. Corren la prueba `slow`
 contra el archivo real y las dos de Excel/PDF.
 
 ## Generación de las seis áreas
@@ -59,3 +59,26 @@ con las seis áreas de siempre marcadas y la vista previa del área 08.
 En el peor caso la letra de 16 pt se pisaba porque el ancho de columna de Excel se
 mide en caracteres del tamaño base. Ahora los anchos se escalan con el tamaño de
 letra (`font_size / 11`).
+
+## Revisión final: las cinco correcciones aplicadas
+
+Después de la revisión independiente se corrigieron los cinco hallazgos de mayor
+impacto:
+
+1. **Imprimir.** El visor de PDF de Edge no registra el verbo `print`; por eso
+   `os.startfile(pdf, "print")` fallaba con WinError 1155. Ahora el panel regenera
+   el `.xlsx` del área y lo imprime con Excel (`Workbook.PrintOut`) en un hilo
+   aparte. La impresión usa el mismo formato que la vista previa.
+2. **Errores del panel.** Los `lambda` de error usaban la variable del `except`,
+   que Python borra al salir del bloque, y mostraban `NameError`. El texto se
+   captura antes de programar el aviso.
+3. **Archivo equivocado.** Un `.xlsx` corrupto o un `.xls` viejo ya no cierran
+   `pythonw`: se muestra `No se pudo leer el reporte …` y se sale con código 1.
+4. **Líneas con pipes inválidas.** Las líneas que tienen pipes pero no la forma
+   esperada se cuentan en `unknown_lines` en vez de descartarse en silencio.
+5. **Alto de fila.** Ahora escala con la letra (compacta 1,2 / normal 1,5 /
+   amplia 1,8) y el código alternativo usa 1,2 × su propia fuente.
+
+Evidencia: suite **45 passed**; `PrintOut` verificado sobre un libro real abierto
+con Excel; el peor caso (16 pt + compacta + códigos alternativos) se renderizó sin
+texto recortado: `evidencia-16pt-compacta.png`.

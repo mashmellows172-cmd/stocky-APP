@@ -1,13 +1,12 @@
-"""Exportación a PDF con Excel y envío a la impresora."""
+"""Abrir Excel, exportar a PDF y enviar a la impresora."""
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 
 class PdfError(Exception):
-    """Excel no pudo abrir o convertir el archivo."""
+    """Excel no pudo abrir, convertir o imprimir el archivo."""
 
 
 def _excel():
@@ -29,13 +28,7 @@ def excel_available() -> bool:
     return True
 
 
-def export_pdf(xlsx: Path, pdf: Path) -> Path:
-    xlsx = Path(xlsx)
-    pdf = Path(pdf)
-    if not xlsx.exists():
-        raise PdfError(f"El archivo no existe: {xlsx}")
-    pdf.parent.mkdir(parents=True, exist_ok=True)
-
+def _run_in_excel(xlsx: Path, action, error_message: str):
     try:
         import pythoncom
         import pywintypes
@@ -49,10 +42,10 @@ def export_pdf(xlsx: Path, pdf: Path) -> Path:
         app = _excel()
         app.Visible = False
         app.DisplayAlerts = False
-        workbook = app.Workbooks.Open(str(xlsx.resolve()), ReadOnly=True)
-        workbook.ExportAsFixedFormat(0, str(pdf.resolve()))  # 0 = xlTypePDF
+        workbook = app.Workbooks.Open(str(Path(xlsx).resolve()), ReadOnly=True)
+        return action(app, workbook)
     except pywintypes.com_error as error:
-        raise PdfError(f"Excel no pudo exportar el PDF: {error}") from error
+        raise PdfError(f"{error_message}: {error}") from error
     finally:
         if workbook is not None:
             try:
@@ -65,15 +58,26 @@ def export_pdf(xlsx: Path, pdf: Path) -> Path:
             except Exception:
                 pass
         pythoncom.CoUninitialize()
-    return pdf
-    return pdf
 
 
-def print_pdf(pdf: Path) -> None:
+def export_pdf(xlsx: Path, pdf: Path) -> Path:
+    xlsx = Path(xlsx)
     pdf = Path(pdf)
-    if not pdf.exists():
-        raise PdfError(f"El archivo no existe: {pdf}")
-    try:
-        os.startfile(str(pdf), "print")
-    except OSError as error:
-        raise PdfError(f"No se pudo enviar a la impresora: {error}") from error
+    if not xlsx.exists():
+        raise PdfError(f"El archivo no existe: {xlsx}")
+    pdf.parent.mkdir(parents=True, exist_ok=True)
+    target = str(pdf.resolve())
+    _run_in_excel(
+        xlsx,
+        lambda app, workbook: workbook.ExportAsFixedFormat(0, target),
+        "Excel no pudo exportar el PDF",
+    )
+    return pdf
+
+
+def print_xlsx(xlsx: Path) -> None:
+    """Imprime el libro con Excel (el verbo «print» del shell no existe para el visor de PDF)."""
+    xlsx = Path(xlsx)
+    if not xlsx.exists():
+        raise PdfError(f"El archivo no existe: {xlsx}")
+    _run_in_excel(xlsx, lambda app, workbook: workbook.PrintOut(), "No se pudo imprimir")

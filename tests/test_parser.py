@@ -123,3 +123,9 @@ def test_reporte_de_otro_formato_lanza_error(tmp_path):
     wb.save(p)
     with pytest.raises(ParseError, match="Formato no soportado"):
         read_report(p)
+
+
+def test_linea_con_campos_inesperados_cuenta_como_desconocida():
+    report = parse_rows([ITEM_26726760, ITEM_26726760 + "|"])
+    assert len(report.rows) == 1
+    assert report.unknown_lines == 1

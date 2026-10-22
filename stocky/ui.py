@@ -15,7 +15,7 @@ from tkinter import simpledialog, ttk
 from .areas import area_name, file_stem, header_label
 from .export import output_dir, write_area_xlsx
 from .models import StockReport
-from .pdf import PdfError, export_pdf, print_pdf
+from .pdf import PdfError, export_pdf, print_xlsx
 from .presets import DEFAULT_CONFIG_PATH, Formato, load_config, save_config
 from .preview import render_pages
 from .theme import COLORS, apply as apply_theme
@@ -400,9 +400,11 @@ class App:
             images = [base64.b64encode(page).decode("ascii") for page in pages]
             self._post(job, lambda: self._paint(area, pdf, images, job))
         except PdfError as error:
-            self._post(job, lambda: self._set_status(f"No se pudo generar el PDF: {error}", error=True))
+            message = f"No se pudo generar el PDF: {error}"
+            self._post(job, lambda: self._set_status(message, error=True))
         except Exception as error:  # pragma: no cover - defensa
-            self._post(job, lambda: self._set_status(f"No se pudo generar la vista previa: {error}", error=True))
+            message = f"No se pudo generar la vista previa: {error}"
+            self._post(job, lambda: self._set_status(message, error=True))
 
     def _post(self, job: int, action) -> None:
         def run() -> None:
@@ -500,16 +502,33 @@ class App:
             self._set_status("Todavía no hay PDF de esta área", error=True)
 
     def _print(self) -> None:
-        pdf = self._pdfs.get(self.current_area)
-        if not (pdf and pdf.exists()):
-            self._set_status("Espera la vista previa o genera los archivos antes de imprimir", error=True)
+        if not self.selection:
+            self._set_status("Marca al menos un área para imprimir", error=True)
             return
+        area = self.current_area
+        self._sync_format()
+        fmt = Formato.from_dict(self.fmt.to_dict())
+        self._set_status(f"Preparando el área {area:02d} para imprimir…")
+        threading.Thread(target=self._print_worker, args=(area, fmt), daemon=True).start()
+
+    def _print_worker(self, area: int, fmt: Formato) -> None:
+        folder = Path(tempfile.mkdtemp(prefix="stocky_print_"))
         try:
-            print_pdf(pdf)
+            xlsx = write_area_xlsx(self.report, area, fmt, folder)
+            if xlsx is None:
+                message = f"El área {area:02d} no tiene ítems con stock"
+                self.root.after(0, lambda: self._set_status(message, error=True))
+                return
+            print_xlsx(xlsx)
+            self.root.after(0, lambda: self._set_status(f"Área {area:02d} enviada a la impresora"))
         except PdfError as error:
-            self._set_status(str(error), error=True)
-        else:
-            self._set_status(f"Área {self.current_area:02d} enviada a la impresora")
+            message = str(error)
+            self.root.after(0, lambda: self._set_status(message, error=True))
+        except Exception as error:  # pragma: no cover - defensa
+            message = f"No se pudo imprimir: {error}"
+            self.root.after(0, lambda: self._set_status(message, error=True))
+        finally:
+            shutil.rmtree(folder, ignore_errors=True)
 
     def _generate_all(self) -> None:
         self._sync_format()

@@ -129,6 +129,9 @@ def parse_rows(lines: Iterable[str]) -> StockReport:
             continue
         fields = _split(line)
         if fields is None:
+            # Línea con pipes que no tiene la forma esperada: no se pierde en
+            # silencio, se cuenta como desconocida.
+            report.unknown_lines += 1
             continue
         if _is_item(fields):
             report.rows.append(_item(fields))

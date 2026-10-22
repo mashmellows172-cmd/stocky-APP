@@ -17,3 +17,10 @@ def test_reporte_vacio_muestra_el_mensaje(monkeypatch, capsys, tmp_path):
     monkeypatch.setattr(app, "read_report", lambda p: (_ for _ in ()).throw(ParseError("El reporte no trae ítems")))
     assert main([str(tmp_path)]) == 1
     assert "no trae ítems" in capsys.readouterr().err
+
+
+def test_archivo_que_no_es_excel_avisa(capsys, tmp_path):
+    bad = tmp_path / "malo.xlsx"
+    bad.write_text("no soy un excel", encoding="utf-8")
+    assert main([str(bad)]) == 1
+    assert "no se pudo leer" in capsys.readouterr().err.lower()
