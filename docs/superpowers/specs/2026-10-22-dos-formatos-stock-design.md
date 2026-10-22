@@ -44,9 +44,10 @@ El archivo `stock19-10.xlsx` no está vacío ni corrupto:
 - Unas 6.320 filas iniciales de encabezados repetidos/espacios; la tabla real
   empieza en la fila 6.321.
 - 30.500 filas de ítems y 30.424 PLU distintos (76 PLU repetidos).
-- 66 áreas con ítems; las seis de siempre tienen datos:
-  área 08: 46 ítems / 108 unidades; área 09: 108 / 615; área 29: 137 / 1.364;
-  área 46: 38 / 111; área 84: 25 / 29; área 99: 75 / 212.
+- 66 áreas con ítems. Después de deduplicar y filtrar `disponible >= 1`, las
+  seis de siempre quedan así:
+  área 08: 39 ítems / 102 unidades; área 09: 107 / 615; área 29: 133 / 1.364;
+  área 46: 36 / 111; área 84: 17 / 29; área 99: 74 / 212.
 - Columnas: B = área, C = nivel de agregación (rubro), D = PLU, E = código de
   barra, F = descripción, G = disponible, H = precio.
 - No trae unidades en empresa, despacho, existencia ni costo.
