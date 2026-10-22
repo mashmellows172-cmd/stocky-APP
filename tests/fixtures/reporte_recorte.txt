@@ -11,3 +11,14 @@ FECHA EMISION : 17/06/2026
  |  1   |7881 MEDIANA                |26726760  |00200026726766 | AMERICAN TOURISTER MALETA FRANKFURT. |(UNI)   -1|(UNI)   -1|       -1 |       -1 |     59990 |     -49994|
  |      |                            |          |07501068898989 |                                      |          |          |          |          |           |           |
  |  1   |3888 BOLSO CONCESION        |28098820  |00200028098823 |CONCESION XTREM NAVY BLUE RIDER3XT SP |(UNI)    1|(UNI)    1|        1 |        1 |     37990 |      20296|
+  FECHA : 17/06/2026                                   L I S T A D O   DE   E X I S T E N C I A S                                      RInLisExiP
+  HORA  : 10:06:36                                                                                                                     PAGINA : 2
+DEPENDENCIA   :   10 MAIPU
+Area          :    0 AREA: TODOS LOS ITEMS.
+FECHA EMISION : 17/06/2026
+  ---------------------------------------------------------------------------------------------------------------------
+ | AREA |     NIVEL DE AGREGACION    |   PLU    |CODIGO DE BARRA|          DESCRIPCION PRODUCTO        |            E X I S T E N C I A S       |||| PRECIO DE |COSTO      |
+ |      |                            |          |               |                                      |----------------------------------------||||   VENTA   |PROMEDIO   |
+ |      |                            |          |               |                                      | UN. EMP  | UN. DESPA|EXISTENCIA|DISPONIBLE|           |           |
+  ---------------------------------------------------------------------------------------------------------------------
+ |  4   |2985 BOTIN OUTDOOR          |28102275  |00200028102278 |BOTIN ALPINEXTREM  CHIBVMVET1 40 CAFE |( C6)    0|(UNI)    1|        1 |        1 |     10450 |      10040|

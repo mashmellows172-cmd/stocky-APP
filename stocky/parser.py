@@ -76,9 +76,26 @@ def _is_header_line(line: str) -> bool:
     return any(marker in line for marker in _HEADER_MARKERS)
 
 
+_FECHA = re.compile(r"^\s*FECHA\s*:\s*(\d{2}/\d{2}/\d{4})")
+_HORA = re.compile(r"^\s*HORA\s*:\s*(\d{1,2}:\d{2}:\d{2})")
+_DEPENDENCIA = re.compile(r"^\s*DEPENDENCIA\s*:\s*(.+?)\s*$")
+
+
+def _read_metadata(line: str, report: StockReport) -> None:
+    if not report.fecha and (match := _FECHA.match(line)):
+        report.fecha = match.group(1)
+    elif not report.hora and (match := _HORA.match(line)):
+        report.hora = match.group(1)
+    elif not report.dependencia and (match := _DEPENDENCIA.match(line)):
+        report.dependencia = match.group(1)
+
+
 def parse_rows(lines: Iterable[str]) -> StockReport:
     report = StockReport()
     for line in lines:
+        if "|" not in line:
+            _read_metadata(line, report)
+            continue
         if _is_header_line(line):
             continue
         fields = _split(line)
@@ -87,8 +104,10 @@ def parse_rows(lines: Iterable[str]) -> StockReport:
         if _is_item(fields):
             report.rows.append(_item(fields))
         elif _is_continuation(fields):
-            # Los códigos alternativos se asocian en la tarea siguiente.
-            continue
+            if report.rows:
+                report.rows[-1].alt_barcodes.append(fields[4])
+            else:
+                report.unknown_lines += 1
         else:
             report.unknown_lines += 1
     return report
