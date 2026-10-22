@@ -88,7 +88,7 @@ def test_reporte_real_completo():
     assert report.conflicts == 0
     assert report.unknown_lines == 0
     assert len({row.area for row in report.rows}) == 69
-    assert len(report.areas()) == 68  # el área 48 no tiene stock disponible
+    assert len(report.areas()) == 68  # el área 50 no tiene stock disponible
     assert sum(len(r.alt_barcodes) for r in report.rows) == 3259  # 3.192 + 67 fusionados
     assert any(r.plu == "23842742" for r in report.rows)  # fila desbordada a B
     assert (report.dependencia, report.fecha, report.hora) == ("10 MAIPU", "17/06/2026", "10:06:36")
