@@ -22,6 +22,9 @@ El archivo `stock19-10.xlsx` se detecta solo por su encabezado (`PLU` +
   disponible 1, precio 4450.
 - `un_emp`, `un_despa`, `existencia` y `costo` quedan en 0; disponible y precio
   vacíos también se leen como 0.
+- En la ventana real, el archivo abre como `Stocky - 19/10/2026`, con 66 áreas,
+  selección 08/09/29/46/84/99 y resumen `30.424 ítems · 6 áreas`; la vista previa
+  del área 08 genera 1 página y un PDF de 145.540 bytes.
 
 ## Generación de las seis áreas
 
