@@ -129,3 +129,87 @@ def test_linea_con_campos_inesperados_cuenta_como_desconocida():
     report = parse_rows([ITEM_26726760, ITEM_26726760 + "|"])
     assert len(report.rows) == 1
     assert report.unknown_lines == 1
+
+
+def _write_column_report(path: Path) -> Path:
+    import openpyxl
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    filas = [
+        [None, None, None, "FECHA : 19/10/2026"],
+        [None, None, None, "HORA  : 10:14:33"],
+        [None, None, None, "DEPENDENCIA   :   10 MAIPU"],
+        [None, "AREA", "NIVEL DE AGREGACION", "PLU", "CODIGO DE BARRA", "DESCRIPCION PRODUCTO", "DISPONIBLE", "PRECIO DE"],
+        [None, 9, "7565 TELEFONIA", "26726760", "00200026726766", "CELULAR ALFA", 2, 59990],
+        [None, 9, "7565 TELEFONIA", "26726760", "07501068898989", "CELULAR ALFA", 2, 59990],
+        [None, None, None, None, "07501068898989", None, None, None],
+        [None, "AREA", "NIVEL DE AGREGACION", "PLU", "CODIGO DE BARRA", "DESCRIPCION PRODUCTO", "DISPONIBLE", "PRECIO DE"],
+        [None, 9, "7565 TELEFONIA", "26726761", "00200026726799", "CELULAR BETA", 0, 37990],
+        [None, 8, "7881 AUDIO", "26726762", "00200026726762", "PARLANTE | GAMMA", 1, 15000],
+        [None, 10, "9999 VARIOS", "26726764", "00200026726764", "REPUESTO", None, None],
+    ]
+    for fila in filas:
+        ws.append(fila)
+    wb.save(path)
+    return path
+
+
+def test_lee_reporte_en_columnas(tmp_path):
+    p = _write_column_report(tmp_path / "columnas.xlsx")
+    report = read_report(p)
+    assert (report.dependencia, report.fecha, report.hora) == ("10 MAIPU", "19/10/2026", "10:14:33")
+    assert len(report.rows) == 4
+    assert report.unknown_lines == 0
+    assert report.conflicts == 0
+    alfa = report.rows[0]
+    assert (alfa.area, alfa.rubro, alfa.plu, alfa.barcode, alfa.desc) == (
+        9,
+        "7565 TELEFONIA",
+        "26726760",
+        "00200026726766",
+        "CELULAR ALFA",
+    )
+    assert (alfa.un_emp, alfa.un_despa, alfa.existencia, alfa.disponible, alfa.precio, alfa.costo) == (0, 0, 0, 2, 59990, 0)
+
+
+def test_columnas_ignoran_encabezados_y_ruido(tmp_path):
+    p = _write_column_report(tmp_path / "columnas.xlsx")
+    report = read_report(p)
+    assert len(report.rows) == 4
+    assert report.unknown_lines == 0
+    assert [fila.desc for fila in report.rows] == ["CELULAR ALFA", "CELULAR BETA", "PARLANTE | GAMMA", "REPUESTO"]
+
+
+def test_columnas_fusionan_plu_repetido(tmp_path):
+    p = _write_column_report(tmp_path / "columnas.xlsx")
+    report = read_report(p)
+    alfa = report.rows[0]
+    assert alfa.plu == "26726760"
+    assert alfa.alt_barcodes == ["07501068898989"]
+    assert len([fila for fila in report.rows if fila.plu == "26726760"]) == 1
+
+
+def test_columnas_con_campos_vacios_quedan_en_cero(tmp_path):
+    p = _write_column_report(tmp_path / "columnas.xlsx")
+    report = read_report(p)
+    repuesto = report.rows[3]
+    assert (repuesto.disponible, repuesto.precio) == (0, 0)
+    assert report.areas() == {8: 1, 9: 1}
+
+
+def test_columnas_con_pipe_en_descripcion_no_se_confunde(tmp_path):
+    p = _write_column_report(tmp_path / "columnas.xlsx")
+    report = read_report(p)
+    assert report.rows[2].desc == "PARLANTE | GAMMA"
+
+
+def test_tabla_sin_encabezado_no_se_adivina(tmp_path):
+    import openpyxl
+
+    wb = openpyxl.Workbook()
+    wb.active.append([None, 9, "7565 TELEFONIA", "26726760", "00200026726766", "CELULAR ALFA", 2, 59990])
+    p = tmp_path / "sin_encabezado.xlsx"
+    wb.save(p)
+    with pytest.raises(ParseError, match="Formato no soportado"):
+        read_report(p)

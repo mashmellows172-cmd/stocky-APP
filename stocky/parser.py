@@ -1,14 +1,14 @@
 """Parser del reporte "LISTADO DE EXISTENCIAS" del SAI.
 
-Cada línea del reporte es texto con campos separados por ``|``. Las líneas sin
-``|`` (encabezados, metadatos, reglas de guiones) se ignoran.
+Acepta dos formatos y los detecta solo: el histórico con campos separados por
+``|`` y el reporte en columnas. En ambos casos produce el mismo ``StockReport``.
 """
 
 from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Sequence
 
 import openpyxl
 
@@ -119,6 +119,47 @@ def _dedupe(rows: list[StockRow]) -> tuple[list[StockRow], int]:
     return unique, conflicts
 
 
+def _looks_like_table(rows: Iterable[Sequence[object]]) -> bool:
+    """Detecta el reporte en columnas por su fila de encabezado."""
+    for row in rows:
+        cells = {str(value).strip() for value in row if value is not None}
+        if "PLU" in cells and any(cell.startswith("DESCRIPCION PRODUCTO") for cell in cells):
+            return True
+    return False
+
+
+def parse_table_rows(rows: Iterable[Sequence[object]]) -> StockReport:
+    """Lee una hoja en columnas (B=área, D=PLU, F=descripción, G=stock, H=precio)."""
+    report = StockReport()
+    for raw in rows:
+        values = ["" if value is None else str(value).strip() for value in raw]
+        if len(values) < 8:
+            values.extend([""] * (8 - len(values)))
+        _read_metadata("".join(values), report)
+        area, rubro, plu, barcode, desc, disponible, precio = values[1:8]
+        if not (area.isdigit() and 5 <= len(plu) <= 8 and plu.isdigit() and barcode and desc):
+            continue
+        report.rows.append(
+            StockRow(
+                area=int(area),
+                rubro=rubro,
+                plu=plu,
+                barcode=barcode,
+                desc=desc,
+                un_emp=0,
+                un_despa=0,
+                existencia=0,
+                disponible=_last_int(disponible),
+                precio=_last_int(precio),
+                costo=0,
+            )
+        )
+    report.rows, report.conflicts = _dedupe(report.rows)
+    if not report.rows:
+        raise ParseError("El reporte no trae ítems")
+    return report
+
+
 def parse_rows(lines: Iterable[str]) -> StockReport:
     report = StockReport()
     for line in lines:
@@ -153,15 +194,21 @@ def read_report(path: Path) -> StockReport:
     workbook = openpyxl.load_workbook(path, data_only=True, read_only=True)
     try:
         sheet = workbook.active
+        rows = list(sheet.iter_rows(values_only=True))
+    finally:
+        workbook.close()
+
+    if _looks_like_table(rows):
+        report = parse_table_rows(rows)
+    else:
         lines = []
-        for row in sheet.iter_rows(values_only=True):
+        for row in rows:
             cells = [str(cell) for cell in row if cell is not None]
             if cells:
                 lines.append("".join(cells))
-    finally:
-        workbook.close()
-    if not any("|" in line for line in lines):
-        raise ParseError("Formato no soportado: no parece un Listado de existencias")
-    report = parse_rows(lines)
+        if not any("|" in line for line in lines):
+            raise ParseError("Formato no soportado: no parece un Listado de existencias")
+        report = parse_rows(lines)
+
     report.source = path
     return report
