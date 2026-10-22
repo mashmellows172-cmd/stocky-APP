@@ -213,3 +213,33 @@ def test_tabla_sin_encabezado_no_se_adivina(tmp_path):
     wb.save(p)
     with pytest.raises(ParseError, match="Formato no soportado"):
         read_report(p)
+
+
+REAL_OCTUBRE = Path(r"C:\Users\victus\Downloads\stock19-10.xlsx")
+
+
+@pytest.mark.slow
+@pytest.mark.skipif(not REAL_OCTUBRE.exists(), reason="archivo real no disponible")
+def test_reporte_de_columnas_real():
+    report = read_report(REAL_OCTUBRE)
+    assert len(report.rows) == 30424
+    assert report.conflicts == 0
+    assert report.unknown_lines == 0
+    assert len({row.area for row in report.rows}) == 66
+    assert len(report.areas()) == 66
+    assert report.areas()[8] == 39
+    assert report.areas()[9] == 107
+    assert report.areas()[29] == 133
+    assert report.areas()[46] == 36
+    assert report.areas()[84] == 17
+    assert report.areas()[99] == 74
+    assert sum(row.disponible for row in report.rows) == 299342
+    assert (report.dependencia, report.fecha, report.hora) == ("10 MAIPU", "19/10/2026", "10:14:33")
+    primero = report.rows[0]
+    assert (primero.area, primero.plu, primero.desc, primero.disponible, primero.precio) == (
+        98,
+        "25985176",
+        "BABY MINK BM322 BEBE.RAYAS 9/12MESES",
+        1,
+        4450,
+    )
