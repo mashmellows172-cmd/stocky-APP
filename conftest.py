@@ -35,3 +35,14 @@ def report_mini() -> StockReport:
         _row(8, "DELTA", 0, "00009999", "00200000009999"),
     ]
     return StockReport(dependencia="10 MAIPU", fecha="17/06/2026", hora="10:06:36", rows=rows)
+
+
+@pytest.fixture
+def xlsx_mini(report_mini, tmp_path) -> Path:
+    from stocky.export import build_workbook, rows_for
+    from stocky.presets import Formato
+
+    workbook = build_workbook(rows_for(report_mini, 9), 9, report_mini, Formato())
+    path = tmp_path / "mini.xlsx"
+    workbook.save(path)
+    return path
