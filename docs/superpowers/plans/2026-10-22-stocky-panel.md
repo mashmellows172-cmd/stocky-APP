@@ -424,8 +424,8 @@ def test_configuracion_de_pagina_carta_y_una_hoja_de_ancho(report_mini):
 
 def test_pie_con_ajuste_y_totales(report_mini):
     ws = build_workbook(rows_for(report_mini, 9), 9, report_mini, Formato()).active
-    assert "Página &P de &N" in ws.oddFooter.left.text
-    assert "3 ítems" in ws.oddFooter.left.text or "3 ítems" in ws.oddFooter.right.text
+    assert "Página &P de &N" in ws.oddFooter.right.text
+    assert "3 ítems" in ws.oddFooter.left.text
 
 def test_area_sin_stock_no_escribe_archivo(report_mini, tmp_path):
     assert write_area_xlsx(report_mini, area=8, fmt=Formato(), out_dir=tmp_path) is None
