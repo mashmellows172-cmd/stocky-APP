@@ -66,6 +66,12 @@ def build_workbook(rows: list[StockRow], area: int, report: StockReport, fmt: Fo
     widths += [56 if fmt.wide_desc else 44, 11, 13]
     last_column = len(headers)
 
+    # Las columnas se miden en caracteres del tamaño base (11 pt en Excel); al
+    # agrandar la letra hay que ensancharlas o el texto se recorta al ajustar la
+    # hoja a una página de ancho.
+    factor = fmt.font_size / 11
+    widths = [round(width * factor, 1) for width in widths]
+
     for index, width in enumerate(widths, start=1):
         ws.column_dimensions[get_column_letter(index)].width = width
 
