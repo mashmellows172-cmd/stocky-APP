@@ -90,6 +90,35 @@ def _read_metadata(line: str, report: StockReport) -> None:
         report.dependencia = match.group(1)
 
 
+def _dedupe(rows: list[StockRow]) -> tuple[list[StockRow], int]:
+    """Fusiona PLU repetidos; devuelve las filas únicas y los conflictos."""
+    kept: dict[tuple[int, str], StockRow] = {}
+    unique: list[StockRow] = []
+    conflicts = 0
+    for row in rows:
+        key = (row.area, row.plu)
+        previous = kept.get(key)
+        if previous is None:
+            kept[key] = row
+            unique.append(row)
+            continue
+        same_data = (previous.desc, previous.disponible, previous.precio, previous.costo) == (
+            row.desc,
+            row.disponible,
+            row.precio,
+            row.costo,
+        )
+        if not same_data:
+            conflicts += 1
+            continue
+        known = {previous.barcode, *previous.alt_barcodes}
+        for code in (row.barcode, *row.alt_barcodes):
+            if code and code not in known:
+                previous.alt_barcodes.append(code)
+                known.add(code)
+    return unique, conflicts
+
+
 def parse_rows(lines: Iterable[str]) -> StockReport:
     report = StockReport()
     for line in lines:
@@ -110,6 +139,9 @@ def parse_rows(lines: Iterable[str]) -> StockReport:
                 report.unknown_lines += 1
         else:
             report.unknown_lines += 1
+    report.rows, report.conflicts = _dedupe(report.rows)
+    if not report.rows:
+        raise ParseError("El reporte no trae ítems")
     return report
 
 
@@ -125,6 +157,8 @@ def read_report(path: Path) -> StockReport:
                 lines.append("".join(cells))
     finally:
         workbook.close()
+    if not any("|" in line for line in lines):
+        raise ParseError("Formato no soportado: no parece un Listado de existencias")
     report = parse_rows(lines)
     report.source = path
     return report

@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from stocky.parser import parse_rows, read_report
+from stocky.parser import ParseError, parse_rows, read_report
 
 FIXTURE = Path(__file__).parent / "fixtures" / "reporte_recorte.txt"
 
@@ -84,10 +84,42 @@ REAL = Path(r"C:\Users\victus\Downloads\stock17-06.xlsx")
 @pytest.mark.skipif(not REAL.exists(), reason="archivo real no disponible")
 def test_reporte_real_completo():
     report = read_report(REAL)
-    assert len(report.rows) == 26527
+    assert len(report.rows) == 26460  # 26.527 líneas - 67 PLU fusionados
+    assert report.conflicts == 0
     assert report.unknown_lines == 0
     assert len({row.area for row in report.rows}) == 69
     assert len(report.areas()) == 68  # el área 48 no tiene stock disponible
-    assert sum(len(r.alt_barcodes) for r in report.rows) == 3192
+    assert sum(len(r.alt_barcodes) for r in report.rows) == 3259  # 3.192 + 67 fusionados
     assert any(r.plu == "23842742" for r in report.rows)  # fila desbordada a B
     assert (report.dependencia, report.fecha, report.hora) == ("10 MAIPU", "17/06/2026", "10:06:36")
+
+
+def test_reporte_vacio_lanza_error():
+    with pytest.raises(ParseError, match="no trae ítems"):
+        parse_rows([",".join(["x"] * 13)])
+
+
+def test_plu_repetido_con_otro_codigo_se_fusiona():
+    report = parse_rows([ITEM_26726760, CONT_07501068898989, ITEM_26726760_CON_CODIGO_2])
+    assert len(report.rows) == 1
+    assert report.rows[0].barcode == "00200026726766"
+    assert "00200026726799" in report.rows[0].alt_barcodes
+    assert report.conflicts == 0
+
+
+def test_plu_repetido_con_stock_distinto_es_conflicto():
+    report = parse_rows([ITEM_26726760, ITEM_26726760_STOCK_5])
+    assert len(report.rows) == 1
+    assert report.rows[0].disponible == -1
+    assert report.conflicts == 1
+
+
+def test_reporte_de_otro_formato_lanza_error(tmp_path):
+    import openpyxl
+    wb = openpyxl.Workbook()
+    wb.active["A1"] = "AREA"
+    wb.active["B1"] = "PLU"
+    p = tmp_path / "otro.xlsx"
+    wb.save(p)
+    with pytest.raises(ParseError, match="Formato no soportado"):
+        read_report(p)
