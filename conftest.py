@@ -46,3 +46,12 @@ def xlsx_mini(report_mini, tmp_path) -> Path:
     path = tmp_path / "mini.xlsx"
     workbook.save(path)
     return path
+
+
+@pytest.fixture
+def pdf_mini(xlsx_mini, tmp_path):
+    from stocky.pdf import excel_available, export_pdf
+
+    if not excel_available():
+        pytest.skip("sin Excel")
+    return export_pdf(xlsx_mini, tmp_path / "mini.pdf")
