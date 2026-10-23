@@ -30,3 +30,18 @@ def test_config_corrupta_devuelve_defaults(tmp_path):
 def test_guardado_es_atomico_sin_dejar_temporales(tmp_path):
     save_config(Config(), tmp_path / "config.json")
     assert [p.name for p in tmp_path.iterdir()] == ["config.json"]
+
+
+def test_bordes_por_defecto_y_saneamiento():
+    f = Formato()
+    assert (f.cell_border, f.table_border) == ("ninguno", "ninguno")
+    malo = Formato.from_dict({"cell_border": "doble", "table_border": "grueso"})
+    assert (malo.cell_border, malo.table_border) == ("ninguno", "grueso")
+
+
+def test_bordes_ida_y_vuelta(tmp_path):
+    cfg = Config()
+    cfg.last_format = Formato(cell_border="punteado", table_border="grueso")
+    save_config(cfg, tmp_path / "config.json")
+    again = load_config(tmp_path / "config.json")
+    assert (again.last_format.cell_border, again.last_format.table_border) == ("punteado", "grueso")

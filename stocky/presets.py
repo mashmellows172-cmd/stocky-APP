@@ -13,6 +13,7 @@ MARGINS = (0.8, 1.0, 1.5, 2.0)
 DENSITIES = ("compacta", "normal", "amplia")
 ORIENTATIONS = ("vertical", "horizontal")
 HEADER_FILLS = ("ninguna", "gris", "verde")
+BORDER_STYLES = ("ninguno", "fino", "medio", "grueso", "punteado")
 
 
 @dataclass(slots=True)
@@ -30,6 +31,8 @@ class Formato:
     thousands: bool = True
     extra_header: str = ""
     min_stock: int = 1
+    cell_border: str = "ninguno"
+    table_border: str = "ninguno"
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -68,6 +71,8 @@ def _sanitize(name: str, value, default):
         return value if value in ORIENTATIONS else default
     if name == "header_fill":
         return value if value in HEADER_FILLS else default
+    if name in ("cell_border", "table_border"):
+        return value if value in BORDER_STYLES else default
     if name == "font_family":
         return value.strip() if isinstance(value, str) and value.strip() else default
     if name == "extra_header":
