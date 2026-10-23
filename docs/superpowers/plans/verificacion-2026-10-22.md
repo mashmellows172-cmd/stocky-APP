@@ -5,7 +5,7 @@ con pipes) y `stock19-10.xlsx` (formato en columnas), ambos reportes reales.
 
 ## Suite completa
 
-`python -m pytest -q` → **52 passed**, sin pruebas saltadas. Corren las dos pruebas
+`python -m pytest -q` → **62 passed**, sin pruebas saltadas. Corren las dos pruebas
 `slow` contra los archivos reales (junio y octubre) y las de Excel/PDF.
 
 ## Segundo formato: reporte en columnas
@@ -25,6 +25,21 @@ El archivo `stock19-10.xlsx` se detecta solo por su encabezado (`PLU` +
 - En la ventana real, el archivo abre como `Stocky - 19/10/2026`, con 66 áreas,
   selección 08/09/29/46/84/99 y resumen `30.424 ítems · 6 áreas`; la vista previa
   del área 08 genera 1 página y un PDF de 145.540 bytes.
+
+## Bordes de la tabla
+
+El panel incorpora dos selectores independientes, `Líneas de celdas` y
+`Contorno de la tabla`, con las opciones Ninguno, Fino, Medio, Grueso y
+Punteado. Los defaults siguen mostrando solo la línea fina bajo el encabezado.
+
+Prueba con `stock19-10.xlsx`, área 08, celda fina y contorno grueso:
+
+- Encabezado: borde izquierdo y superior grueso, inferior fino.
+- Datos: borde izquierdo grueso en la primera columna, separadores internos
+  finos y borde derecho grueso en la última.
+- Códigos alternativos: reciben la grilla en todas sus columnas.
+- El xlsx exportado tiene 44 filas y 5 columnas; el PDF resultante es de 1 página
+  y 146.230 bytes.
 
 ## Generación de las seis áreas
 
@@ -96,6 +111,6 @@ impacto:
 5. **Alto de fila.** Ahora escala con la letra (compacta 1,2 / normal 1,5 /
    amplia 1,8) y el código alternativo usa 1,2 × su propia fuente.
 
-Evidencia: suite **52 passed**; `PrintOut` verificado sobre un libro real abierto
+Evidencia: suite **62 passed**; `PrintOut` verificado sobre un libro real abierto
 con Excel; el peor caso (16 pt + compacta + códigos alternativos) se renderizó sin
 texto recortado: `evidencia-16pt-compacta.png`.

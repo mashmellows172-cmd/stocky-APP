@@ -23,6 +23,13 @@ from .ui_state import DEFAULT_AREAS, initial_selection, resolve_font, status_tex
 
 DENSITIES = {"Compacta": "compacta", "Normal": "normal", "Amplia": "amplia"}
 FILLS = {"Sin color": "ninguna", "Gris": "gris", "Verde": "verde"}
+BORDERS = {
+    "Ninguno": "ninguno",
+    "Fino": "fino",
+    "Medio": "medio",
+    "Grueso": "grueso",
+    "Punteado": "punteado",
+}
 MARGINS = {"0,8 cm": 0.8, "1,0 cm": 1.0, "1,5 cm": 1.5, "2,0 cm": 2.0}
 ORIENTATIONS = {"Vertical": "vertical", "Horizontal": "horizontal"}
 
@@ -137,6 +144,8 @@ class App:
         self.v_density = tk.StringVar(value=_label(DENSITIES, self.fmt.density))
         self.v_zebra = tk.BooleanVar(value=self.fmt.zebra)
         self.v_fill = tk.StringVar(value=_label(FILLS, self.fmt.header_fill))
+        self.v_cell_border = tk.StringVar(value=_label(BORDERS, self.fmt.cell_border))
+        self.v_table_border = tk.StringVar(value=_label(BORDERS, self.fmt.table_border))
         self.v_margin = tk.StringVar(value=_label(MARGINS, self.fmt.margin_cm))
         self.v_orientation = tk.StringVar(value=_label(ORIENTATIONS, self.fmt.orientation))
         self.v_wide = tk.BooleanVar(value=self.fmt.wide_desc)
@@ -150,6 +159,8 @@ class App:
             ttk.Spinbox(inner, from_=8, to=24, textvariable=self.v_title, width=6),
             ttk.Combobox(inner, textvariable=self.v_density, values=list(DENSITIES), state="readonly"),
             ttk.Combobox(inner, textvariable=self.v_fill, values=list(FILLS), state="readonly"),
+            ttk.Combobox(inner, textvariable=self.v_cell_border, values=list(BORDERS), state="readonly"),
+            ttk.Combobox(inner, textvariable=self.v_table_border, values=list(BORDERS), state="readonly"),
             ttk.Combobox(inner, textvariable=self.v_margin, values=list(MARGINS), state="readonly"),
             ttk.Combobox(inner, textvariable=self.v_orientation, values=list(ORIENTATIONS), state="readonly"),
             ttk.Entry(inner, textvariable=self.v_extra),
@@ -168,9 +179,11 @@ class App:
             ("Tamaño del título", variable_widgets[2]),
             ("Densidad", variable_widgets[3]),
             ("Color del encabezado", variable_widgets[4]),
-            ("Márgenes", variable_widgets[5]),
-            ("Orientación", variable_widgets[6]),
-            ("Encabezado extra", variable_widgets[7]),
+            ("Líneas de celdas", variable_widgets[5]),
+            ("Contorno de la tabla", variable_widgets[6]),
+            ("Márgenes", variable_widgets[7]),
+            ("Orientación", variable_widgets[8]),
+            ("Encabezado extra", variable_widgets[9]),
         ]:
             row = self._field(inner, row, text, widget)
 
@@ -223,6 +236,8 @@ class App:
             self.v_density,
             self.v_zebra,
             self.v_fill,
+            self.v_cell_border,
+            self.v_table_border,
             self.v_margin,
             self.v_orientation,
             self.v_wide,
@@ -283,6 +298,8 @@ class App:
         self.fmt.density = DENSITIES.get(self.v_density.get(), "normal")
         self.fmt.zebra = bool(self.v_zebra.get())
         self.fmt.header_fill = FILLS.get(self.v_fill.get(), "gris")
+        self.fmt.cell_border = BORDERS.get(self.v_cell_border.get(), "ninguno")
+        self.fmt.table_border = BORDERS.get(self.v_table_border.get(), "ninguno")
         self.fmt.margin_cm = MARGINS.get(self.v_margin.get(), 1.5)
         self.fmt.orientation = ORIENTATIONS.get(self.v_orientation.get(), "vertical")
         self.fmt.wide_desc = bool(self.v_wide.get())
@@ -297,6 +314,8 @@ class App:
         self.v_density.set(_label(DENSITIES, self.fmt.density))
         self.v_zebra.set(self.fmt.zebra)
         self.v_fill.set(_label(FILLS, self.fmt.header_fill))
+        self.v_cell_border.set(_label(BORDERS, self.fmt.cell_border))
+        self.v_table_border.set(_label(BORDERS, self.fmt.table_border))
         self.v_margin.set(_label(MARGINS, self.fmt.margin_cm))
         self.v_orientation.set(_label(ORIENTATIONS, self.fmt.orientation))
         self.v_wide.set(self.fmt.wide_desc)

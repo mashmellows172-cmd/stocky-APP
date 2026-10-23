@@ -23,6 +23,8 @@ ROW_HEIGHT_FACTORS = {"compacta": 1.2, "normal": 1.5, "amplia": 1.8}
 HEADER_COLORS = {"gris": "D9D9D9", "verde": "C6EFCE"}
 ZEBRA_COLOR = "F2F2F2"
 THIN = Side(style="thin", color="808080")
+BORDER_COLOR = "808080"
+_BORDER_SIDES = {"ninguno": None, "fino": "thin", "medio": "medium", "grueso": "thick", "punteado": "dotted"}
 
 
 def _sort_key(row: StockRow) -> tuple[str, str]:
@@ -43,6 +45,28 @@ def _number_format(fmt: Formato) -> str:
 def _header_fill(fmt: Formato):
     color = HEADER_COLORS.get(fmt.header_fill)
     return PatternFill("solid", fgColor=color) if color else None
+
+
+def _border_side(style: str):
+    side = _BORDER_SIDES.get(style)
+    return Side(style=side, color=BORDER_COLOR) if side else None
+
+
+def _apply_table_borders(ws, fmt: Formato, first_row: int, last_row: int, last_column: int) -> None:
+    cell_side = _border_side(fmt.cell_border)
+    table_side = _border_side(fmt.table_border)
+    for row in range(first_row, last_row + 1):
+        for column in range(1, last_column + 1):
+            left = table_side if column == 1 and table_side else cell_side
+            right = table_side if column == last_column and table_side else cell_side
+            top = table_side if row == first_row and table_side else cell_side
+            bottom = table_side if row == last_row and table_side else cell_side
+            # Sin borde de celda se conserva la línea fina histórica bajo el encabezado.
+            if row == first_row and cell_side is None and bottom is None:
+                bottom = THIN
+            ws.cell(row=row, column=column).border = Border(
+                left=left, right=right, top=top, bottom=bottom
+            )
 
 
 def _text(ws, row: int, column: int, value: str, font: Font, align: str = "left") -> None:
@@ -92,12 +116,10 @@ def build_workbook(rows: list[StockRow], area: int, report: StockReport, fmt: Fo
 
     header_font = Font(name=fmt.font_family, size=fmt.font_size, bold=True)
     fill = _header_fill(fmt)
-    border = Border(bottom=THIN)
     for index, header in enumerate(headers, start=1):
         cell = ws.cell(row=HEADER_ROW, column=index, value=header)
         cell.font = header_font
         cell.alignment = Alignment(horizontal="center", vertical="center")
-        cell.border = border
         if fill is not None:
             cell.fill = fill
 
@@ -144,6 +166,7 @@ def build_workbook(rows: list[StockRow], area: int, report: StockReport, fmt: Fo
             current += 1
 
     last_row = max(current - 1, HEADER_ROW)
+    _apply_table_borders(ws, fmt, HEADER_ROW, last_row, last_column)
 
     ws.print_area = f"A1:{get_column_letter(last_column)}{last_row}"
     ws.print_title_rows = f"{TITLE_ROW}:{HEADER_ROW}"
