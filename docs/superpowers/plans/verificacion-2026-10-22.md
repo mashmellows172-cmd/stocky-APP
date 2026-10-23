@@ -41,6 +41,22 @@ Prueba con `stock19-10.xlsx`, área 08, celda fina y contorno grueso:
 - El xlsx exportado tiene 44 filas y 5 columnas; el PDF resultante es de 1 página
   y 146.230 bytes.
 
+## Stocky portable
+
+Se empaquetó la aplicación con PyInstaller 6.22.3 en modo onefile y sin consola,
+para Windows 64 bits. El ejecutable incluye Python 3.14.5, Tkinter, openpyxl,
+Pillow, pypdfium2 y pywin32.
+
+- `dist/Stocky.exe`: 35.765.694 bytes.
+- Copia lista para llevar: `C:\Users\victus\OneDrive\Desktop\Stocky Portable\Stocky.exe`.
+- Se abrió desde una carpeta distinta (`%TEMP%\Stocky Portable Prueba`) con
+  `stock19-10.xlsx`; la ventana mostró `Stocky - 19/10/2026`.
+- Un smoke test congelado generó el xlsx del área 08, exportó el PDF de 1 página
+  (146.230 bytes) y terminó con código 0.
+- Solo hace falta Excel en la PC externa para PDF/impresión; el xlsx se guarda
+  sin Excel.
+- La suite sigue en **62 passed**.
+
 ## Generación de las seis áreas
 
 Salida en `C:\Users\victus\Downloads\Stock 2026-06-17\`: **12 archivos**
