@@ -12,6 +12,17 @@ def test_la_ventana_muestra_el_reporte_y_avisa_si_falla_el_pdf(report_mini, tmp_
         assert app.selection == [9]
         assert app.current_area == 9
 
+        assert app.v_cell_border.get() == "Ninguno"
+        assert app.v_table_border.get() == "Ninguno"
+        app.v_cell_border.set("Grueso")
+        app.v_table_border.set("Punteado")
+        app._sync_format()
+        assert app.fmt.cell_border == "grueso"
+        assert app.fmt.table_border == "punteado"
+        app.v_cell_border.set("Ninguno")
+        app.v_table_border.set("Ninguno")
+        app._sync_format()
+
         monkeypatch.setattr(ui, "write_area_xlsx", lambda *args, **kwargs: tmp_path / "x.xlsx")
 
         def boom(*args, **kwargs):
