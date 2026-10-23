@@ -45,8 +45,22 @@ def test_alto_de_fila_acompana_la_letra(report_mini):
 def test_sin_bordes_conserva_la_salida_actual(report_mini):
     ws = build_workbook(rows_for(report_mini, 9), 9, report_mini, Formato()).active
     assert ws["A4"].border.bottom.style == "thin"
+    assert ws["A4"].border.left is None
+    assert ws["A4"].border.right is None
+    assert ws["A4"].border.top is None
     assert ws["A5"].border.left is None
     assert ws["A5"].border.bottom is None
+
+
+def test_titulo_y_metadatos_sin_bordes(report_mini):
+    fmt = Formato(cell_border="grueso", table_border="grueso")
+    ws = build_workbook(rows_for(report_mini, 9), 9, report_mini, fmt).active
+    for coordinate in ("A1", "A2", "A3"):
+        border = ws[coordinate].border
+        assert all(
+            getattr(side, "style", None) is None
+            for side in (border.left, border.right, border.top, border.bottom)
+        )
 
 
 @pytest.mark.parametrize(
@@ -80,5 +94,12 @@ def test_codigo_alternativo_tambien_lleva_grilla(report_mini):
     ws = build_workbook(rows_for(report_mini, 9), 9, report_mini, fmt).active
     # ALFA es la primera fila y su código alternativo queda en la fila 6.
     assert ws["A6"].border.left.style == "thick"
-    assert ws["B6"].border.right.style == "thin"
     assert ws["E6"].border.right.style == "thick"
+    for column in "ABCDE":
+        border = ws[f"{column}6"].border
+        assert border.top.style == "thin"
+        assert border.bottom.style == "thin"
+    assert ws["C6"].border.left.style == "thin"
+    assert ws["C6"].border.right.style == "thin"
+    assert ws["D6"].border.left.style == "thin"
+    assert ws["D6"].border.right.style == "thin"

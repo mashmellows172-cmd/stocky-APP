@@ -61,6 +61,7 @@ def _apply_table_borders(ws, fmt: Formato, first_row: int, last_row: int, last_c
             right = table_side if column == last_column and table_side else cell_side
             top = table_side if row == first_row and table_side else cell_side
             bottom = table_side if row == last_row and table_side else cell_side
+            # Sin borde de celda se conserva la línea fina histórica bajo el encabezado.
             if row == first_row and cell_side is None and bottom is None:
                 bottom = THIN
             ws.cell(row=row, column=column).border = Border(

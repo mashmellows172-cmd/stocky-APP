@@ -5,7 +5,7 @@ con pipes) y `stock19-10.xlsx` (formato en columnas), ambos reportes reales.
 
 ## Suite completa
 
-`python -m pytest -q` → **61 passed**, sin pruebas saltadas. Corren las dos pruebas
+`python -m pytest -q` → **62 passed**, sin pruebas saltadas. Corren las dos pruebas
 `slow` contra los archivos reales (junio y octubre) y las de Excel/PDF.
 
 ## Segundo formato: reporte en columnas
@@ -111,6 +111,6 @@ impacto:
 5. **Alto de fila.** Ahora escala con la letra (compacta 1,2 / normal 1,5 /
    amplia 1,8) y el código alternativo usa 1,2 × su propia fuente.
 
-Evidencia: suite **61 passed**; `PrintOut` verificado sobre un libro real abierto
+Evidencia: suite **62 passed**; `PrintOut` verificado sobre un libro real abierto
 con Excel; el peor caso (16 pt + compacta + códigos alternativos) se renderizó sin
 texto recortado: `evidencia-16pt-compacta.png`.
